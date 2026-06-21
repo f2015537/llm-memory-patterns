@@ -246,6 +246,19 @@ Agent: - January
 
 `thread-2` has no conversation history (fresh STM), but the bullet-point rule learned in `thread-1` is already active. STM is scoped to a thread; LTM is scoped to a user.
 
+**Session 4: a different user has no inherited rules**
+```
+python 7_stm_ltm.py --user-id alice --thread-id alice-thread-1
+```
+```
+user_id=alice  |  thread_id=alice-thread-1
+
+You: What are the first three months of the year?
+Agent: The first three months of the year are January, February, and March.
+```
+
+`alice` gets a normal prose response because she has no stored rules. Each user's LTM is completely isolated, so `demo-user`'s preferences never bleed into another user's sessions.
+
 **In-session commands:** `/show-ltm`, `/show-stm`, `/threads`, `/switch <thread-id>`, `exit`.
 
 ---
