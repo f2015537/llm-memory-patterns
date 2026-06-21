@@ -230,7 +230,21 @@ You: What rules do you follow?
 Agent: - I always respond in bullet points.
 ```
 
-Switching to a new `thread_id` resets the conversation (STM) while keeping all learned rules (LTM), because STM is scoped to a thread and LTM is scoped to a user.
+**Session 3: new thread, STM resets but LTM carries over**
+```
+python 7_stm_ltm.py --thread-id thread-2
+```
+```
+user_id=demo-user  |  thread_id=thread-2
+Loaded 1 rule(s) from previous sessions.
+
+You: What are the first three months of the year?
+Agent: - January
+       - February
+       - March
+```
+
+`thread-2` has no conversation history (fresh STM), but the bullet-point rule learned in `thread-1` is already active. STM is scoped to a thread; LTM is scoped to a user.
 
 **In-session commands:** `/show-ltm`, `/show-stm`, `/threads`, `/switch <thread-id>`, `exit`.
 
