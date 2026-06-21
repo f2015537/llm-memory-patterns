@@ -1,6 +1,6 @@
 # LLM Memory Patterns
 
-A progressive series of Python scripts that explore how conversational memory works in LLM applications — from a completely stateless call to a two-layer system with separate short-term and long-term memory stores.
+A progressive series of Python scripts that explore how conversational memory works in LLM applications, ranging from a completely stateless call to a two-layer system with separate short-term and long-term memory stores.
 
 Each script is self-contained and runnable. The series is designed to be read in order: each step introduces one new concept and builds directly on the previous one.
 
@@ -10,7 +10,7 @@ Each script is self-contained and runnable. The series is designed to be read in
 
 | Script | Pattern | Key idea |
 |--------|---------|----------|
-| `1_stateless.py` | No memory | Baseline — each LLM call is independent |
+| `1_stateless.py` | No memory | Baseline: each LLM call is independent |
 | `2_stm_ram.py` | In-process history | Full conversation history in a Python list |
 | `3_stm_thread.py` | SQLite persistence + threads | History survives restarts; named threads |
 | `4_stm_slidingwindow.py` | Sliding window | `@before_model` middleware trims to last N messages |
@@ -48,7 +48,7 @@ cp .env.example .env
 
 ### 1. Stateless (`1_stateless.py`)
 
-The simplest possible LLM call. No history is sent — every message is a brand-new context. Illustrates the baseline problem that all subsequent scripts solve.
+The simplest possible LLM call. No history is sent; every message is a brand-new context. Illustrates the baseline problem that all subsequent scripts solve.
 
 ```bash
 python 1_stateless.py
@@ -69,7 +69,7 @@ The model answered the first question correctly, then immediately forgot.
 
 ### 2. Short-term memory in RAM (`2_stm_ram.py`)
 
-The full conversation history is kept in a Python list and sent with every call. The model can now recall earlier messages — but only within the current process. The history is lost on restart.
+The full conversation history is kept in a Python list and sent with every call. The model can now recall earlier messages, but only within the current process. The history is lost on restart.
 
 ```bash
 python 2_stm_ram.py
@@ -89,7 +89,7 @@ LLM: Your name is Alex.
 
 ### 3. SQLite persistence + named threads (`3_stm_thread.py`)
 
-History is written to SQLite after every turn and reloaded on startup. Conversations now survive restarts. Multiple independent threads are supported — each `thread_id` is a separate conversation.
+History is written to SQLite after every turn and reloaded on startup. Conversations now survive restarts. Multiple independent threads are supported; each `thread_id` is a separate conversation.
 
 ```bash
 python 3_stm_thread.py
@@ -130,7 +130,7 @@ python 4_stm_slidingwindow.py
 
 ### 5. Summarization (`5_stm_summarization.py`)
 
-Instead of discarding old messages, a `@before_model` middleware compresses them into a 2–3 sentence summary once the stored count exceeds `SUMMARIZE_AFTER = 6`. The last `KEEP_RECENT = 4` messages are kept verbatim alongside the summary.
+Instead of discarding old messages, a `@before_model` middleware compresses them into a 2-3 sentence summary once the stored count exceeds `SUMMARIZE_AFTER = 6`. The last `KEEP_RECENT = 4` messages are kept verbatim alongside the summary.
 
 ```bash
 python 5_stm_summarization.py
@@ -139,7 +139,7 @@ python 5_stm_summarization.py
 ```
 You: ...  (after several turns)
 
-  [summarization triggered — compressed 4 messages into summary]
+  [summarization triggered - compressed 4 messages into summary]
   [summary: Alex introduced himself as a backend engineer at a fintech
    startup who prefers concise answers. The conversation covered...]
 ```
@@ -150,9 +150,9 @@ You: ...  (after several turns)
 
 ---
 
-### 6. Long-term memory — user profile (`6_ltm_userprofile.py`)
+### 6. Long-term memory: user profile (`6_ltm_userprofile.py`)
 
-Introduces `SqliteStore`, LangGraph's durable key-value store. After every turn a second LLM call extracts durable facts (name, job, preferences, etc.) and writes them to the store. On the next startup those facts are loaded and injected into the system prompt — the model remembers you across completely separate sessions.
+Introduces `SqliteStore`, LangGraph's durable key-value store. After every turn a second LLM call extracts durable facts (name, job, preferences, etc.) and writes them to the store. On the next startup those facts are loaded and injected into the system prompt, so the model remembers you across completely separate sessions.
 
 ```bash
 python 6_ltm_userprofile.py
@@ -193,15 +193,15 @@ You: /facts
 
 The full two-layer architecture:
 
-- **Short-term memory** (`SqliteSaver`) — per-thread conversation history, restored automatically on reconnect to the same `thread_id`.
-- **Long-term memory** (`SqliteStore`) — cross-session behavioral rules ("always respond in bullet points"). Saved via a `save_rule` tool that the agent calls autonomously; applied to every future session via the system prompt.
+- **Short-term memory** (`SqliteSaver`): per-thread conversation history, restored automatically on reconnect to the same `thread_id`.
+- **Long-term memory** (`SqliteStore`): cross-session behavioral rules ("always respond in bullet points"). Saved via a `save_rule` tool that the agent calls autonomously; applied to every future session via the system prompt.
 
 ```bash
 python 7_stm_ltm.py                           # default user + thread
 python 7_stm_ltm.py --user-id alice --thread-id project-x
 ```
 
-**Session 1 — teach a rule:**
+**Session 1: teach a rule**
 ```
 user_id=demo-user  |  thread_id=thread-1
 
@@ -222,7 +222,7 @@ Agent: - Mercury
 You: exit
 ```
 
-**Session 2 — fresh restart, rule persists:**
+**Session 2: fresh restart, rule persists**
 ```
 Loaded 1 rule(s) from previous sessions.
 
@@ -230,7 +230,7 @@ You: What rules do you follow?
 Agent: - I always respond in bullet points.
 ```
 
-Switching to a new `thread_id` resets the conversation (STM) while keeping all learned rules (LTM) — because STM is scoped to a thread and LTM is scoped to a user.
+Switching to a new `thread_id` resets the conversation (STM) while keeping all learned rules (LTM), because STM is scoped to a thread and LTM is scoped to a user.
 
 **In-session commands:** `/show-ltm`, `/show-stm`, `/threads`, `/switch <thread-id>`, `exit`.
 
@@ -241,10 +241,10 @@ Switching to a new `thread_id` resets the conversation (STM) while keeping all l
 ```
 1_stateless          llm.invoke([current message])
 2_stm_ram            llm.invoke([system + full history])
-3_stm_thread         llm.invoke([system + full history])   ← history in SQLite
-4_stm_slidingwindow  create_agent + @before_model (trim)   ← SqliteSaver
+3_stm_thread         llm.invoke([system + full history])   <- history in SQLite
+4_stm_slidingwindow  create_agent + @before_model (trim)   <- SqliteSaver
 5_stm_summarization  create_agent + @before_model (summarize)
-6_ltm_userprofile    llm.invoke + SqliteStore.put/get      ← fact extraction
+6_ltm_userprofile    llm.invoke + SqliteStore.put/get      <- fact extraction
 7_stm_ltm            create_agent + SqliteSaver + SqliteStore + tools
 ```
 
@@ -254,7 +254,7 @@ The dividing line between scripts 3 and 4 is the shift from calling `llm.invoke(
 
 ## Tech stack
 
-- [LangChain](https://github.com/langchain-ai/langchain) — LLM abstraction and agent primitives
-- [LangGraph](https://github.com/langchain-ai/langgraph) — `create_agent`, `SqliteSaver`, `SqliteStore`, `@before_model`
-- [LangSmith](https://smith.langchain.com) — optional tracing (set `LANGSMITH_TRACING=true` in `.env`)
-- OpenAI `gpt-4o` — model used across all scripts
+- [LangChain](https://github.com/langchain-ai/langchain): LLM abstraction and agent primitives
+- [LangGraph](https://github.com/langchain-ai/langgraph): `create_agent`, `SqliteSaver`, `SqliteStore`, `@before_model`
+- [LangSmith](https://smith.langchain.com): optional tracing (set `LANGSMITH_TRACING=true` in `.env`)
+- OpenAI `gpt-4o`: model used across all scripts
